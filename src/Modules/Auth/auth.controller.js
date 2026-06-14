@@ -2,6 +2,7 @@ import { userModel } from "../../DB/Models/user.model.js";
 import bcrypt from "bcrypt";
 import CryptoJs from "crypto-js";
 import jwt from "jsonwebtoken";
+import { registerSchema } from "./auth.validation.js";
 
 export const register = async (req, res, next) => {
   const { username, email, password, confirmPassword, phone, role } = req.body;
