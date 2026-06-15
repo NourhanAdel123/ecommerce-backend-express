@@ -10,11 +10,17 @@ app.use(express.json());
 app.use("/user", userRouter);
 app.use("/auth", authRouter);
 
+import { globalErrorHandler } from "./src/utils/errorHandling.js";
+import { AppError } from "./src/utils/AppError.js";
+
 // handle invalid url
-app.use((req, res) => {
-  res.json({ message: "invalid url or method" });
+app.use((req, res, next) => {
+  next(new AppError("invalid url or method", 404));
 });
 
-app.listen(process.env.PORT, () => {
+// global error handler
+app.use(globalErrorHandler);
+
+app.listen(process.env.PORT || 3000, () => {
   console.log("server is running");
 });

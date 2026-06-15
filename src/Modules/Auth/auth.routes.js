@@ -10,4 +10,5 @@ router.post(
   AUC.register,
 );
 router.post("/login", AUC.login);
+router.post("/refreshToken", AUC.refreshUserToken);
 export default router;

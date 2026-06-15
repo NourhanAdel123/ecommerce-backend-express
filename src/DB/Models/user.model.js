@@ -46,6 +46,8 @@ const userSchema = new Schema(
     Address: String,
     img: String,
     BOD: String,
+    token: String,
+    refreshToken: String,
   },
   { timestamps: true },
 );
