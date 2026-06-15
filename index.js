@@ -1,21 +1,13 @@
 import express from "express";
-import userRouter from "./src/Modules/user/user.routes.js";
-import authRouter from "./src/Modules/Auth/auth.routes.js";
-import categoryRouter from "./src/Modules/Category/category.routes.js";
-import subCategoryRouter from "./src/Modules/SubCategory/subCategory.routes.js";
 import { DBConnection } from "./src/DB/connection.js";
-// import { config } from "dotenv";
-// config();
+import { allRoutes } from "./src/index.routes.js";
+import { AppError } from "./src/utils/AppError.js";
+import { globalErrorHandler } from "./src/utils/errorHandling.js";
+
 const app = express();
 DBConnection();
 app.use(express.json());
-app.use("/user", userRouter);
-app.use("/auth", authRouter);
-app.use("/category", categoryRouter);
-app.use("/subCategory", subCategoryRouter);
-
-import { globalErrorHandler } from "./src/utils/errorHandling.js";
-import { AppError } from "./src/utils/AppError.js";
+app.use(allRoutes);
 
 // handle invalid url
 app.use((req, res, next) => {
