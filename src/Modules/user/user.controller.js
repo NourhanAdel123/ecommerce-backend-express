@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import CryptoJs from "crypto-js";
 import { asyncHandler } from "../../utils/errorHandling.js";
 
+import bcrypt from "bcrypt";
+
 export const get_use_profile = asyncHandler(async (req, res, next) => {
   const user = req.user;
   user.phone = CryptoJs.AES.decrypt(
@@ -12,3 +14,31 @@ export const get_use_profile = asyncHandler(async (req, res, next) => {
 
   res.json({ message: "user profile get successfully", user });
 });
+
+export const change_password = async (req, res, next) => {
+  try {
+    const { oldPassword, password } = req.body;
+
+    const comparePass = await bcrypt.compare(oldPassword, req.user.password);
+
+    if (!comparePass) {
+      return next(new Error("Old password is incorrect", { cause: 400 }));
+    }
+
+    const hashNewPass = await bcrypt.hash(
+      password,
+      Number(process.env.SALT_ROUNDS),
+    );
+
+    await userModel.findByIdAndUpdate(req.user._id, {
+      password: hashNewPass,
+      changeCredentialTime: Date.now(),
+    });
+
+    return res.json({
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};

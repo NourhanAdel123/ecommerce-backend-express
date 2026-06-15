@@ -1,14 +1,23 @@
 const Validation = (schema) => {
   return (req, res, next) => {
-    const data = { ...req.body, ...req.params, ...req.query, ...req.headers };
-    const result = schema.Validation(data, { abortEarly: false });
+    const data = {
+      ...req.body,
+      ...req.params,
+      ...req.query,
+    };
 
-    const errorMessage = result.error.details.map((obj) => {
-      return obj.message;
+    const result = schema.validate(data, {
+      abortEarly: false,
     });
-    return next(new Error(errorMessage, { cause: 400 }));
+
+    if (result.error) {
+      const errorMessage = result.error.details.map((obj) => obj.message);
+
+      return next(new Error(errorMessage, { cause: 400 }));
+    }
 
     next();
   };
 };
+
 export default Validation;
