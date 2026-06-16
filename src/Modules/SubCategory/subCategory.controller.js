@@ -19,8 +19,14 @@ const add_subCategory = async (req, res, next) => {
   }
 };
 const get_all_subCategories = async (req, res, next) => {
+  const { category } = req.params;
+  let subCategories;
   try {
-    const subCategories = await SubCategoryModel.find();
+    if (category) {
+      subCategories = await SubCategoryModel.findById(category);
+    } else {
+      subCategories = await SubCategoryModel.find();
+    }
     return res.json({ message: "All Sub Categories", subCategories });
   } catch (error) {
     return next(error);

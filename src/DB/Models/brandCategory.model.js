@@ -16,7 +16,7 @@ const brandCategorySchema = new Schema(
     },
     logo: {
       type: String, // Store image URL or file path
-      required: true,
+      // required: true,
     },
   },
   {

@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, mongoose } from "mongoose";
 
 const productSchema = new Schema(
   {
@@ -6,6 +6,10 @@ const productSchema = new Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    description: {
+      type: String,
+      required: true,
     },
     slug: {
       type: String,
@@ -26,10 +30,6 @@ const productSchema = new Schema(
     priceAfterDiscount: {
       type: Number,
       min: 0,
-    },
-    description: {
-      type: String,
-      required: true,
     },
     stock: {
       type: Number,
