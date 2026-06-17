@@ -2,6 +2,7 @@ import { userModel } from "../../DB/Models/user.model.js";
 import jwt from "jsonwebtoken";
 import CryptoJs from "crypto-js";
 import { asyncHandler } from "../../utils/errorHandling.js";
+import cloudinary from "../../services/cloudinary.js";
 
 import bcrypt from "bcrypt";
 
@@ -40,5 +41,28 @@ export const change_password = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const uploadProfileImage = (req, res, next) => {
+  try {
+    res
+      .status(201)
+      .json({ message: "file uploaded successfully", file: req.file });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const uploadCloudinaryImage = (req, res, next) => {
+  try {
+    const uploadResult = cloudinary.uploader.upload(req.file.path, {
+      folder: `user/${req.user._id}`,
+    });
+    res
+      .status(201)
+      .json({ message: "file uploaded successfully", file: uploadResult });
+  } catch (error) {
+    return next(error);
   }
 };
