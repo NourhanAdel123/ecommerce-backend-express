@@ -43,7 +43,13 @@ const userSchema = new Schema(
       // default: RolesTypes.User,
     },
     phone: String,
-    Address: String,
+    Address: [
+      {
+        city: String,
+        streat: String,
+        government: String,
+      },
+    ],
     img: {
       secure_url: String,
       public_id: String,

@@ -77,12 +77,42 @@ export const uploadCloudinaryImage = async (req, res, next) => {
       },
     );
 
-    res
-      .status(201)
-      .json({
-        message: "file uploaded successfully",
-        file: { secure_url, public_id },
-      });
+    res.status(201).json({
+      message: "file uploaded successfully",
+      file: { secure_url, public_id },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const update_address = async (req, res, next) => {
+  const { _id } = req.params;
+  try {
+    const user = await userModel.findByIdAndUpdate(
+      { _id },
+      {
+        $addToSet: { Address: req.body },
+      },
+      { new: true },
+    );
+    res.status(201).json({ message: "address updated successfully", user });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const delete_address = async (req, res, next) => {
+  const { _id } = req.params;
+  try {
+    const user = await userModel.findByIdAndUpdate(
+      { _id },
+      {
+        $pull: { Address: { _id: req.body.address } },
+      },
+      { new: true },
+    );
+    res.status(201).json({ message: "address updated successfully", user });
   } catch (error) {
     return next(error);
   }

@@ -44,4 +44,6 @@ router.post(
   multerCloudFun().single("profile"),
   UC.uploadCloudinaryImage,
 );
+router.patch("/update-address/:_id", UC.update_address);
+
 export default router;
