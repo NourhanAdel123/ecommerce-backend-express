@@ -44,5 +44,4 @@ router.post(
   multerCloudFun().single("profile"),
   UC.uploadCloudinaryImage,
 );
-
 export default router;

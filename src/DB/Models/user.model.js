@@ -44,10 +44,19 @@ const userSchema = new Schema(
     },
     phone: String,
     Address: String,
-    img: String,
+    img: {
+      secure_url: String,
+      public_id: String,
+    },
     BOD: String,
     token: String,
     refreshToken: String,
+    favorites: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "product",
+      },
+    ],
   },
   { timestamps: true },
 );

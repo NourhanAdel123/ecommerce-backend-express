@@ -54,14 +54,35 @@ export const uploadProfileImage = (req, res, next) => {
   }
 };
 
-export const uploadCloudinaryImage = (req, res, next) => {
+export const uploadCloudinaryImage = async (req, res, next) => {
+  const { _id } = req.user;
   try {
-    const uploadResult = cloudinary.uploader.upload(req.file.path, {
-      folder: `user/${req.user._id}`,
-    });
+    if (!req.file) {
+      return next(new Error("please upload your profile picture"));
+    }
+    const { secure_url, public_id } = await cloudinary.uploader.upload(
+      req.file.path,
+      {
+        folder: `user/images`,
+      },
+    );
+
+    const user = await userModel.findByIdAndUpdate(
+      { _id },
+      {
+        img: {
+          secure_url,
+          public_id,
+        },
+      },
+    );
+
     res
       .status(201)
-      .json({ message: "file uploaded successfully", file: uploadResult });
+      .json({
+        message: "file uploaded successfully",
+        file: { secure_url, public_id },
+      });
   } catch (error) {
     return next(error);
   }

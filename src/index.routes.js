@@ -5,6 +5,7 @@ import categoryRouter from "./Modules/Category/category.routes.js";
 import subCategoryRouter from "./Modules/SubCategory/subCategory.routes.js";
 import productRouter from "./Modules/products/product.routes.js";
 import brandRouter from "./Modules/Brand/brand.routes.js";
+import reviewRouter from "./Modules/reviews/review.router.js";
 import { globalErrorHandler } from "./utils/errorHandling.js";
 import { AppError } from "./utils/AppError.js";
 
@@ -16,6 +17,7 @@ router.use("/category", categoryRouter);
 router.use("/subCategory", subCategoryRouter);
 router.use("/product", productRouter);
 router.use("/brand", brandRouter);
+router.use("/review", reviewRouter);
 
 router.use(globalErrorHandler);
 
