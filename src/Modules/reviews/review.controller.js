@@ -1,5 +1,3 @@
-import { ReviewModel } from "../../DB/Models/Reviews.model.js";
-
 export const add_review = async (req, res, next) => {
   try {
     // unique
