@@ -5,6 +5,7 @@ import { asyncHandler } from "../../utils/errorHandling.js";
 import cloudinary from "../../services/cloudinary.js";
 
 import bcrypt from "bcrypt";
+import { redisClient } from "../../redisConfig/redis.js";
 
 export const get_use_profile = asyncHandler(async (req, res, next) => {
   const user = req.user;
@@ -116,4 +117,23 @@ export const delete_address = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+};
+
+export const get_all_users = async (req, res, next) => {
+  if (redisClient.isOpen) {
+    const cachedUsers = await redisClient.get("users:all");
+    if (cachedUsers) {
+      const pardedData = JSON.parse(cachedUsers);
+      res.status(201).json({
+        source: "redus cache",
+        count: pardedData,
+        parsedData: pardedData,
+      });
+    }
+  }
+  const users = await userModel.find();
+  if (redisClient.isOpen) {
+    await redisClient.setEx("user:all", 50, JSON.stringify(users));
+  }
+  res.status(201).json({ message: "all", users });
 };
