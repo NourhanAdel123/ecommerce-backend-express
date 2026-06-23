@@ -1,7 +1,7 @@
 import express from "express";
 import { DBConnection } from "./src/DB/connection.js";
 import { allRoutes } from "./src/index.routes.js";
-import { connectRedis } from "./src/redisConfig/redis.js";
+// import { connectRedis } from "./src/redisConfig/redis.js";
 import { AppError } from "./src/utils/AppError.js";
 import { globalErrorHandler } from "./src/utils/errorHandling.js";
 import morgan from "morgan";
@@ -10,6 +10,9 @@ const app = express();
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(allRoutes);
+app.get("/ping", (req, res) => {
+  res.send("ok");
+});
 
 // handle invalid url
 app.use((req, res, next) => {
@@ -21,8 +24,8 @@ app.use(globalErrorHandler);
 
 const bootstrap = async () => {
   await DBConnection();
-  await connectRedis();
-  app.listen(process.env.PORT || 3000, () => {
+  // await connectRedis();
+  app.listen(5000, () => {
     console.log("server is running");
   });
 };

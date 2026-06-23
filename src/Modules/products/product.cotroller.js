@@ -1,118 +1,136 @@
-import { CategoryModel } from "../../DB/Models/category.model.js";
-import { productModel } from "../../DB/Models/product.model.js";
 import { userModel } from "../../DB/Models/user.model.js";
-import { redisClient } from "../../redisConfig/redis.js";
-import slugify from "slugify";
-console.log("product controller loaded");
+import bcrypt from "bcrypt";
+import CryptoJs from "crypto-js";
+import jwt from "jsonwebtoken";
+import { AppError } from "../../utils/AppError.js";
+import { asyncHandler } from "../../utils/errorHandling.js";
 
-// Cache key for all products
-const ALL_PRODUCTS_CACHE_KEY = "products:all";
-const CACHE_TTL = 60 * 60; // 1 hour in seconds
+/* ---------------- REGISTER ---------------- */
+export const register = asyncHandler(async (req, res, next) => {
+  const { username, email, password, confirmPassword, phone, role } = req.body;
 
-const add_product = async (req, res, next) => {
-  try {
-    req.body.slug = slugify(req.body.title);
-    const product = await productModel.create(req.body);
-
-    // Invalidate all products cache since product list changed
-    await redisClient.del(ALL_PRODUCTS_CACHE_KEY);
-
-    res.json({ message: "product added sucsessfully", product });
-  } catch (error) {
-    return next(error);
+  if (password !== confirmPassword) {
+    return next(new AppError("password mismatch", 400));
   }
-};
 
-// const get_Allproducts = async (req, res, next) => {
-//   console.log("GET ALL PRODUCTS START");
-
-//   try {
-//     const cached = await redisClient.get(ALL_PRODUCTS_CACHE_KEY);
-//     if (cached) {
-//       return res.json({
-//         message: "all products (from cache)",
-//         products: JSON.parse(cached),
-//       });
-//     }
-
-//     const products = await productModel.find();
-
-//     // Store all products in Redis cache
-//     await redisClient.setEx(
-//       ALL_PRODUCTS_CACHE_KEY,
-//       CACHE_TTL,
-//       JSON.stringify(products),
-//     );
-//     console.log("Products from Mongo:", products.length);
-
-//     res.json({ message: "all products", products });
-//   } catch (error) {
-//     return next(error);
-//   }
-// };
-
-const get_all_products = async (req, res, next) => {
-  try {
-    const products = await productModel.find();
-
-    res.status(200).json({
-      message: "all products from mongo",
-      products,
-    });
-  } catch (error) {
-    return next(error);
+  const userExists = await userModel.findOne({ email });
+  if (userExists) {
+    return next(new AppError("email already exists", 409));
   }
-};
 
-const get_SingleProduct = async (req, res, next) => {
-  const { _id } = req.params;
-  try {
-    const product = await productModel.findById(_id);
-    res.json({ message: "specific product", product });
-  } catch (error) {
-    return next(error);
+  const hashedPassword = bcrypt.hashSync(password, +process.env.SALT_ROUNDS);
+
+  const encryptedPhone = CryptoJs.AES.encrypt(
+    phone,
+    process.env.JWT_SECRET,
+  ).toString();
+
+  const user = await userModel.create({
+    username,
+    email,
+    password: hashedPassword,
+    phone: encryptedPhone,
+    role,
+  });
+
+  res.status(201).json({
+    message: "user created successfully",
+    user,
+  });
+});
+
+/* ---------------- LOGIN ---------------- */
+export const login = asyncHandler(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return next(new AppError("email not found", 404));
   }
-};
 
-const update_product = async (req, res, next) => {
-  const { _id } = req.params;
-  try {
-    const updatedproduct = await productModel.findOneAndUpdate(
-      { _id },
-      req.body,
+  const isMatch = bcrypt.compareSync(password, user.password);
+  if (!isMatch) {
+    return next(new AppError("wrong password", 401));
+  }
+
+  const secret =
+    user.role === "Admin"
+      ? process.env.ADMIN_JWT_SECRET
+      : process.env.JWT_SECRET;
+
+  const accessToken = jwt.sign(
+    {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      type: "access",
+    },
+    secret,
+    { expiresIn: "1h" },
+  );
+
+  const refreshToken = jwt.sign(
+    {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      type: "refresh",
+    },
+    secret,
+    { expiresIn: "7d" },
+  );
+
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  res.status(200).json({
+    message: "login successful",
+    accessToken,
+    refreshToken,
+  });
+});
+
+/* ---------------- REFRESH TOKEN ---------------- */
+export const refreshUserToken = asyncHandler(async (req, res, next) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return next(new AppError("refresh token required", 400));
+  }
+
+  const user = await userModel.findOne({ refreshToken });
+  if (!user) {
+    return next(new AppError("invalid refresh token", 403));
+  }
+
+  const secret =
+    user.role === "Admin"
+      ? process.env.ADMIN_JWT_SECRET
+      : process.env.JWT_SECRET;
+
+  jwt.verify(refreshToken, secret, (err, decoded) => {
+    if (err) {
+      return next(new AppError("refresh token expired", 403));
+    }
+
+    if (decoded.type !== "refresh") {
+      return next(new AppError("invalid token type", 403));
+    }
+
+    const newAccessToken = jwt.sign(
       {
-        new: true,
+        _id: user._id,
+        email: user.email,
+        role: user.role,
+        type: "access",
       },
+      secret,
+      { expiresIn: "1h" },
     );
 
-    // Invalidate first-page cache since product data changed
-    await redisClient.del(FIRST_PAGE_CACHE_KEY);
-
-    res.json({ message: "update product", updatedproduct });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-const delet_product = async (req, res, next) => {
-  const { _id } = req.params;
-  try {
-    const brand = await productModel.deleteOne(_id);
-
-    // Invalidate first-page cache since product list changed
-    await redisClient.del(FIRST_PAGE_CACHE_KEY);
-
-    res.json({ message: "brand deleted successfully", brand });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export {
-  add_product,
-  // get_Allproducts,
-  get_all_products,
-  get_SingleProduct,
-  update_product,
-  delet_product,
-};
+    res.status(200).json({
+      message: "token refreshed",
+      accessToken: newAccessToken,
+    });
+  });
+});

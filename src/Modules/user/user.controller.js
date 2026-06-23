@@ -5,7 +5,7 @@ import { asyncHandler } from "../../utils/errorHandling.js";
 import cloudinary from "../../services/cloudinary.js";
 
 import bcrypt from "bcrypt";
-import { redisClient } from "../../redisConfig/redis.js";
+// import { redisClient } from "../../redisConfig/redis.js";
 
 export const get_use_profile = asyncHandler(async (req, res, next) => {
   const user = req.user;
